@@ -10,66 +10,108 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f4f6f9;
+      background: #eef2f7;
       margin: 0;
       padding: 20px;
-      text-align: center;
-    }
-
-    h1 {
-      color: #333;
     }
 
     .container {
-      max-width: 900px;
+      max-width: 1100px;
       margin: auto;
       background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      padding: 25px;
+      border-radius: 16px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
 
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .description {
+      text-align: center;
+      color: #555;
+      margin-bottom: 25px;
+    }
+
+    .main-layout {
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 30px;
+      align-items: start;
+    }
+
+    .header-row,
     .category-row {
       display: grid;
-      grid-template-columns: 2fr 1fr 1fr;
+      grid-template-columns: 2fr 1fr 1fr 80px;
       gap: 10px;
       margin-bottom: 10px;
     }
 
+    .header-row {
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+
     input {
       padding: 10px;
-      border: 1px solid #ccc;
       border-radius: 8px;
-      font-size: 16px;
+      border: 1px solid #ccc;
+      font-size: 15px;
     }
 
     button {
-      padding: 10px 16px;
-      margin-top: 10px;
       border: none;
       border-radius: 8px;
+      padding: 10px;
       cursor: pointer;
-      font-size: 16px;
+      font-size: 15px;
     }
 
-    button:hover {
-      opacity: 0.9;
+    .add-btn {
+      background: #2e7d32;
+      color: white;
+      margin-top: 10px;
     }
 
-    #addButton {
-      background: #4caf50;
+    .delete-btn {
+      background: #c62828;
       color: white;
     }
 
-    #finalGrade {
-      font-size: 28px;
-      margin: 20px 0;
-      color: #222;
+    .stats {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f5f5f5;
+      border-radius: 12px;
     }
 
-    .chart-container {
-      width: 400px;
-      margin: auto;
+    .stats h2 {
+      margin-top: 0;
+    }
+
+    .warning {
+      color: #c62828;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    canvas {
+      width: 100% !important;
+      max-width: 400px;
+      height: auto !important;
+    }
+
+    @media (max-width: 850px) {
+      .main-layout {
+        grid-template-columns: 1fr;
+      }
+
+      canvas {
+        margin: auto;
+      }
     }
   </style>
 </head>
@@ -80,24 +122,39 @@
 
   <h1>Grade Weight Visualizer</h1>
 
-  <div class="category-row">
-    <strong>Category</strong>
-    <strong>Grade %</strong>
-    <strong>Weight %</strong>
+  <div class="description">
+    Edit categories, grades, and weights to see how weighted grading works.
   </div>
 
-  <div id="categories"></div>
+  <div class="main-layout">
 
-  <button id="addButton" onclick="addCategory()">
-    Add Category
-  </button>
+    <div>
 
-  <div id="finalGrade">
-    Final Grade: 0%
-  </div>
+      <div class="header-row">
+        <div>Category</div>
+        <div>Grade %</div>
+        <div>Weight %</div>
+        <div>Delete</div>
+      </div>
 
-  <div class="chart-container">
-    <canvas id="gradeChart"></canvas>
+      <div id="categories"></div>
+
+      <button class="add-btn" onclick="addCategory()">
+        Add Category
+      </button>
+
+      <div class="stats">
+        <h2 id="finalGrade">Final Grade: 0%</h2>
+        <div id="weightTotal">Total Weight: 0%</div>
+        <div id="warning" class="warning"></div>
+      </div>
+
+    </div>
+
+    <div>
+      <canvas id="gradeChart"></canvas>
+    </div>
+
   </div>
 
 </div>
@@ -105,61 +162,93 @@
 <script>
 
 let chart;
-let categoryCount = 0;
+let categoryId = 0;
 const maxCategories = 10;
 
-function addCategory(name = "", grade = "", weight = "") {
+function addCategory(name="", grade="", weight="") {
 
-  if (categoryCount >= maxCategories) {
+  const currentRows =
+    document.querySelectorAll(".category-row").length;
+
+  if (currentRows >= maxCategories) {
     alert("Maximum of 10 categories.");
     return;
   }
 
-  categoryCount++;
+  categoryId++;
 
   const row = document.createElement("div");
   row.className = "category-row";
+  row.id = `row${categoryId}`;
 
   row.innerHTML = `
-    <input type="text" placeholder="Homework"
-      value="${name}" id="name${categoryCount}">
+    <input type="text"
+      placeholder="Homework"
+      value="${name}"
+      class="name">
 
-    <input type="number" placeholder="90"
-      value="${grade}" id="grade${categoryCount}">
+    <input type="number"
+      placeholder="90"
+      class="grade"
+      min="0"
+      max="100"
+      value="${grade}">
 
-    <input type="number" placeholder="20"
-      value="${weight}" id="weight${categoryCount}">
+    <input type="number"
+      placeholder="20"
+      class="weight"
+      min="0"
+      max="100"
+      value="${weight}">
+
+    <button class="delete-btn"
+      onclick="deleteCategory('row${categoryId}')">
+      X
+    </button>
   `;
 
-  document.getElementById("categories").appendChild(row);
+  document.getElementById("categories")
+    .appendChild(row);
 
-  row.querySelectorAll("input").forEach(input => {
-    input.addEventListener("input", updateChart);
-  });
+  row.querySelectorAll("input")
+    .forEach(input => {
+      input.addEventListener("input", updateChart);
+    });
 
+  updateChart();
+}
+
+function deleteCategory(id) {
+  document.getElementById(id).remove();
   updateChart();
 }
 
 function updateChart() {
 
-  const labels = [];
-  const weights = [];
+  const rows =
+    document.querySelectorAll(".category-row");
+
+  let labels = [];
+  let weights = [];
 
   let weightedTotal = 0;
   let totalWeight = 0;
 
-  for (let i = 1; i <= categoryCount; i++) {
+  rows.forEach((row, index) => {
 
     const name =
-      document.getElementById(`name${i}`).value || `Category ${i}`;
+      row.querySelector(".name").value ||
+      `Category ${index + 1}`;
 
     const grade =
-      Number(document.getElementById(`grade${i}`).value);
+      Number(row.querySelector(".grade").value);
 
     const weight =
-      Number(document.getElementById(`weight${i}`).value);
+      Number(row.querySelector(".weight").value);
 
-    if (!isNaN(grade) && !isNaN(weight) && weight > 0) {
+    if (!isNaN(grade) &&
+        !isNaN(weight) &&
+        weight > 0) {
 
       labels.push(name);
       weights.push(weight);
@@ -167,15 +256,35 @@ function updateChart() {
       weightedTotal += grade * weight;
       totalWeight += weight;
     }
-  }
+  });
 
   const finalGrade =
     totalWeight > 0
     ? (weightedTotal / totalWeight).toFixed(1)
     : 0;
 
-  document.getElementById("finalGrade").innerHTML =
+  document.getElementById("finalGrade")
+    .innerHTML =
     `Final Grade: <strong>${finalGrade}%</strong>`;
+
+  document.getElementById("weightTotal")
+    .innerHTML =
+    `Total Weight: <strong>${totalWeight}%</strong>`;
+
+  const warning = document.getElementById("warning");
+
+  if (totalWeight < 100) {
+    warning.textContent =
+      "Weights must add up to 100%.";
+  }
+  else if (totalWeight > 100) {
+    warning.textContent =
+      "Weights are OVER 100%!";
+  }
+  else {
+    warning.textContent =
+      "Perfect! Weights total 100%.";
+  }
 
   if (chart) {
     chart.destroy();
@@ -185,14 +294,20 @@ function updateChart() {
     document.getElementById("gradeChart"),
     {
       type: "pie",
+
       data: {
         labels: labels,
         datasets: [{
           data: weights
         }]
       },
+
       options: {
-        responsive: true
+        plugins: {
+          legend: {
+            position: "bottom"
+          }
+        }
       }
     }
   );
