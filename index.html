@@ -1,22 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grade Weight Visualizer</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    .category-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    input {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    button {
+      padding: 10px 16px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    #addButton {
+      background: #4caf50;
+      color: white;
+    }
+
+    #finalGrade {
+      font-size: 28px;
+      margin: 20px 0;
+      color: #222;
+    }
+
+    .chart-container {
+      width: 400px;
+      margin: auto;
+    }
+  </style>
+</head>
+
 <body>
 
-<h1>Grade Weight Visualizer</h1>
+<div class="container">
 
-<div id="categories"></div>
+  <h1>Grade Weight Visualizer</h1>
 
-<button onclick="addCategory()">Add Category</button>
-<button onclick="updateChart()">Calculate</button>
+  <div class="category-row">
+    <strong>Category</strong>
+    <strong>Grade %</strong>
+    <strong>Weight %</strong>
+  </div>
 
-<h2 id="finalGrade"></h2>
+  <div id="categories"></div>
 
-<canvas id="gradeChart"></canvas>
+  <button id="addButton" onclick="addCategory()">
+    Add Category
+  </button>
+
+  <div id="finalGrade">
+    Final Grade: 0%
+  </div>
+
+  <div class="chart-container">
+    <canvas id="gradeChart"></canvas>
+  </div>
+
+</div>
 
 <script>
+
 let chart;
 let categoryCount = 0;
 const maxCategories = 10;
 
-function addCategory() {
+function addCategory(name = "", grade = "", weight = "") {
 
   if (categoryCount >= maxCategories) {
     alert("Maximum of 10 categories.");
@@ -25,77 +117,92 @@ function addCategory() {
 
   categoryCount++;
 
-  const div = document.createElement("div");
-  div.className = "row";
+  const row = document.createElement("div");
+  row.className = "category-row";
 
-  div.innerHTML = `
-    Category:
-    <input type="text" id="name${categoryCount}" placeholder="Homework">
+  row.innerHTML = `
+    <input type="text" placeholder="Homework"
+      value="${name}" id="name${categoryCount}">
 
-    Grade:
-    <input type="number" id="grade${categoryCount}" placeholder="90">
+    <input type="number" placeholder="90"
+      value="${grade}" id="grade${categoryCount}">
 
-    Weight:
-    <input type="number" id="weight${categoryCount}" placeholder="20">
+    <input type="number" placeholder="20"
+      value="${weight}" id="weight${categoryCount}">
   `;
 
-  document.getElementById("categories").appendChild(div);
+  document.getElementById("categories").appendChild(row);
+
+  row.querySelectorAll("input").forEach(input => {
+    input.addEventListener("input", updateChart);
+  });
+
+  updateChart();
 }
 
 function updateChart() {
 
-  let labels = [];
-  let weights = [];
+  const labels = [];
+  const weights = [];
 
-  let totalWeighted = 0;
+  let weightedTotal = 0;
   let totalWeight = 0;
 
   for (let i = 1; i <= categoryCount; i++) {
 
-    const name = document.getElementById(`name${i}`).value || `Category ${i}`;
+    const name =
+      document.getElementById(`name${i}`).value || `Category ${i}`;
 
-    const grade = Number(document.getElementById(`grade${i}`).value);
+    const grade =
+      Number(document.getElementById(`grade${i}`).value);
 
-    const weight = Number(document.getElementById(`weight${i}`).value);
+    const weight =
+      Number(document.getElementById(`weight${i}`).value);
 
     if (!isNaN(grade) && !isNaN(weight) && weight > 0) {
 
       labels.push(name);
       weights.push(weight);
 
-      totalWeighted += grade * weight;
+      weightedTotal += grade * weight;
       totalWeight += weight;
     }
   }
 
-  const final = totalWeight > 0
-    ? (totalWeighted / totalWeight).toFixed(1)
+  const finalGrade =
+    totalWeight > 0
+    ? (weightedTotal / totalWeight).toFixed(1)
     : 0;
 
-  document.getElementById("finalGrade").innerText =
-    `Final Grade: ${final}%`;
+  document.getElementById("finalGrade").innerHTML =
+    `Final Grade: <strong>${finalGrade}%</strong>`;
 
   if (chart) {
     chart.destroy();
   }
 
   chart = new Chart(
-    document.getElementById('gradeChart'),
+    document.getElementById("gradeChart"),
     {
-      type: 'pie',
+      type: "pie",
       data: {
         labels: labels,
         datasets: [{
           data: weights
         }]
+      },
+      options: {
+        responsive: true
       }
     }
   );
 }
 
-for (let i = 0; i < 3; i++) {
-  addCategory();
-}
+addCategory("Homework", 90, 20);
+addCategory("Quizzes", 80, 30);
+addCategory("Tests", 70, 50);
+
 </script>
 
 </body>
+</html>
