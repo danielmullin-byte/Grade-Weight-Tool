@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Grade Weight Visualizer</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial;
+      max-width: 700px;
+      margin: auto;
+      padding: 20px;
+      text-align: center;
+    }
+
+    input {
+      width: 70px;
+      margin: 5px;
+    }
+
+    .row {
+      margin-bottom: 10px;
+    }
+
+    canvas {
+      max-width: 400px;
+      margin: auto;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>Grade Weight Visualizer</h1>
+
+<div class="row">
+  Homework Grade:
+  <input id="hwGrade" type="number" value="90">
+
+  Weight:
+  <input id="hwWeight" type="number" value="20">
+</div>
+
+<div class="row">
+  Quiz Grade:
+  <input id="quizGrade" type="number" value="80">
+
+  Weight:
+  <input id="quizWeight" type="number" value="30">
+</div>
+
+<div class="row">
+  Test Grade:
+  <input id="testGrade" type="number" value="70">
+
+  Weight:
+  <input id="testWeight" type="number" value="50">
+</div>
+
+<button onclick="updateChart()">Calculate</button>
+
+<h2 id="finalGrade"></h2>
+
+<canvas id="gradeChart"></canvas>
+
+<script>
+let chart;
+
+function updateChart() {
+
+  const hwGrade = Number(document.getElementById('hwGrade').value);
+  const quizGrade = Number(document.getElementById('quizGrade').value);
+  const testGrade = Number(document.getElementById('testGrade').value);
+
+  const hwWeight = Number(document.getElementById('hwWeight').value);
+  const quizWeight = Number(document.getElementById('quizWeight').value);
+  const testWeight = Number(document.getElementById('testWeight').value);
+
+  const final =
+    (hwGrade * hwWeight +
+    quizGrade * quizWeight +
+    testGrade * testWeight)
+    / (hwWeight + quizWeight + testWeight);
+
+  document.getElementById('finalGrade').innerText =
+    "Final Grade: " + final.toFixed(1) + "%";
+
+  const data = {
+    labels: ['Homework', 'Quizzes', 'Tests'],
+    datasets: [{
+      data: [hwWeight, quizWeight, testWeight]
+    }]
+  };
+
+  if (chart) {
+    chart.destroy();
+  }
+
+  chart = new Chart(
+    document.getElementById('gradeChart'),
+    {
+      type: 'pie',
+      data: data
+    }
+  );
+}
+
+updateChart();
+</script>
+
+</body>
+</html>
